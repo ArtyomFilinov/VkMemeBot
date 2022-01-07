@@ -1,33 +1,39 @@
-from typing import ForwardRef
-import vocabulary as voc
+import vocabulary
+
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+access_token = os.getenv("TOKEN")
+group_id = os.getenv("GROUP_ID")
 
 import vk_api
 from vk_api import bot_longpoll
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 
-vk = vk_api.VkApi(token = "TOP SECRET")
-longpool = VkBotLongPoll(vk, 203612865)
+vk = vk_api.VkApi(token = access_token)
+longpoll = VkBotLongPoll(vk, group_id)
 
-def has_photo(d, photo):
-    return photo in d.photos.keys()
+def has_attachment(dictionary, attachment):
+    return attachment in dictionary.attachments.keys()
 
-def get_photo(d, photo):
-    return d.photos[photo]
+def get_attachment(dictionary, attachment):
+    return dictionary.attachments[attachment]
 
-def send_photo(id, photo) :
+def send_attachment(chat_id, attachment):
     post = {
-        "chat_id" : id, 
-        "attachment" : photo, 
+        "chat_id" : chat_id, 
+        "attachment" : attachment, 
         "random_id" : 0
         }
 
     vk.method("messages.send", post)
 
-for event in longpool.listen(): 
-    print(event.type)
+for event in longpoll.listen():
     if event.type == VkBotEventType.MESSAGE_NEW:
         if event.from_chat:
-            id = event.chat_id
-            name = event.object.message["text"]
+            chat_id = event.chat_id
+            command = event.object.message["text"].lower()
 
-            if (has_photo(voc, name)): send_photo(id, get_photo(voc, name))
+            if has_attachment(vocabulary, command):
+                send_attachment(chat_id, get_attachment(vocabulary, command))
